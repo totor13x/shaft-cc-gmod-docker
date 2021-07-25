@@ -1,0 +1,69 @@
+version: "3.2"
+
+services:
+  gmod_server:
+    build:
+        context: .
+    command: -port $PORT \
+      -tickrate $TICKRATE \
+      -maxplayers $PLAYERS \
+      +gamemode $GAMEMODE_VOLUME \
+      +map $MAP \
+      -authkey 1BD5762C3E8D8E23113D8619F68DB20A \
+      +host_workshop_collection $WORKSHOP \
+      +sv_setsteamaccount $STEAM_ACC \
+      -allowlocalhttp
+    stdin_open: true
+    tty: true
+    container_name: gmod-server-$NAME
+    ports:
+      - "$PORT:$PORT/udp"
+    volumes:
+      # Корень зла
+      - ./volume/addons:/gmodserv/garrysmod/addons/
+
+      # Луа библиотеки
+      - ./volume/luabin:/gmodserv/garrysmod/lua/bin/
+      
+      # Воркшоп предметы (не сохраняются, кажется)
+      - type: bind
+        source: ./volume/gmas
+        target: /gmodserv/garrysmod/cache/srcds/
+
+      # Конфиг выбранного режима
+      - ./volume/$GAMEMODE/code:/gmodserv/garrysmod/gamemodes/$GAMEMODE_VOLUME/
+      - type: bind
+        source: ./volume/$GAMEMODE/data
+        target: /gmodserv/garrysmod/data/
+      - type: bind
+        source: ./volume/$GAMEMODE/sv.db
+        target: /gmodserv/garrysmod/sv.db
+      - type: bind
+        source: ./volume/$GAMEMODE/server.cfg
+        target: /gmodserv/garrysmod/cfg/server.cfg
+      
+      # - ./volume/deathrun:/gmodserv/garrysmod/gamemodes/deathrun/
+      # - ./volume/gmas:/gmodserv/garrysmod/cache/srcds/
+      # - ./volume/sv.db:/gmodserv/garrysmod/sv.db
+
+      # - type: bind
+      #   source: ./volume/data
+      #   target: /gmodserv/garrysmod/data/
+      # - type: bind
+      #   source: ./volume/sv.db
+      #   target: /gmodserv/garrysmod/sv.db
+      # - type: bind
+      #   source: ./server.cfg
+      #   target: /gmodserv/garrysmod/cfg/server.cfg
+      # - ./server.cfg:/gmodserv/cfg/server.cfg
+    hostname: hostnamed
+    restart: always
+    extra_hosts:
+      - hostnamed:$HOSTIP
+      - "app.local:192.168.0.119" # Remove in future
+      - "api.app.local:192.168.0.119" # Remove in future
+    networks:
+      - gmod
+
+networks:
+  gmod:
